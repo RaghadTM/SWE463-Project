@@ -120,7 +120,7 @@ class PrayerTimesPage extends StatelessWidget {
                             ),
                           ),
                           onPressed: () {
-                            // TODO: استدعاء API لاحقاً
+                            // TODO: Implement refresh functionality
                           },
                           child: Text(
                             'Refresh',

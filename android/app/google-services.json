@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "36849572754",
+    "project_id": "prayer-plus-e8966",
+    "storage_bucket": "prayer-plus-e8966.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:36849572754:android:6b410d31bb07d9064bbf4b",
+        "android_client_info": {
+          "package_name": "com.example.untitled25"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyAHdmP83ibwkjCxhDllz7qU9pPBnDdUeoE"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

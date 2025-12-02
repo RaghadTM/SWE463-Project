@@ -1,8 +1,10 @@
 import 'package:flutter/material.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'home_page.dart';
 import 'prayer_times_page.dart';
 import 'settings_page.dart';
 import 'app_config.dart';
+import 'hadith_repository.dart';
 
 class SubmitHadithPage extends StatefulWidget {
   const SubmitHadithPage({super.key});
@@ -25,17 +27,29 @@ class _SubmitHadithPageState extends State<SubmitHadithPage> {
     super.dispose();
   }
 
+
   void _onSubmit() {
     if (_formKey.currentState!.validate()) {
+      final text = _hadithController.text.trim();
+      final category = _selectedCategory;
+
+      Navigator.pushReplacement(
+        context,
+        MaterialPageRoute(
+          builder: (_) => PrayerHomePage(
+            submittedCategory: category,
+            submittedText: text,
+          ),
+        ),
+      );
+
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('Submitted successfully')),
       );
-      _hadithController.clear();
-      setState(() {
-        _selectedCategory = 'Hadith';
-      });
     }
   }
+
+
 
   void _onNavTap(int index) {
     if (index == 0) {

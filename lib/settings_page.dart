@@ -3,6 +3,8 @@ import 'home_page.dart';
 import 'prayer_times_page.dart';
 import 'submit_hadith_page.dart';
 import 'app_config.dart';
+import 'notification_service.dart';
+
 
 class SettingsPage extends StatefulWidget {
   const SettingsPage({super.key});
@@ -40,9 +42,7 @@ class _SettingsPageState extends State<SettingsPage> {
         context,
         MaterialPageRoute(builder: (_) => const SubmitHadithPage()),
       );
-    } else if (index == 3) {
-      // هنا أصلًا
-    }
+    } else if (index == 3) {}
   }
 
   @override
@@ -187,8 +187,14 @@ class _SettingsPageState extends State<SettingsPage> {
                           ),
                         ),
                         value: prayerAlerts,
-                        onChanged: (v) {
-                          setState(() => prayerAlerts = v ?? false);
+                        onChanged: (v) async {
+                          final value = v ?? false;
+                          setState(() => prayerAlerts = value);
+                          if (value) {
+                            await NotificationService.schedulePrayerNotification();
+                          } else {
+                            await NotificationService.cancelPrayerNotification();
+                          }
                         },
                       ),
                       CheckboxListTile(
@@ -203,8 +209,14 @@ class _SettingsPageState extends State<SettingsPage> {
                           ),
                         ),
                         value: hadithAlerts,
-                        onChanged: (v) {
-                          setState(() => hadithAlerts = v ?? false);
+                        onChanged: (v) async {
+                          final value = v ?? false;
+                          setState(() => hadithAlerts = value);
+                          if (value) {
+                            await NotificationService.scheduleDailyHadithNotification();
+                          } else {
+                            await NotificationService.cancelDailyHadithNotification();
+                          }
                         },
                       ),
                     ],

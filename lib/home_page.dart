@@ -1,16 +1,22 @@
-// lib/home_page.dart
 import 'package:flutter/material.dart';
+import 'package:share_plus/share_plus.dart';
 import 'prayer_times_page.dart';
 import 'submit_hadith_page.dart';
 import 'settings_page.dart';
 import 'app_config.dart';
 
 class PrayerHomePage extends StatelessWidget {
-  const PrayerHomePage({super.key});
+  final String submittedCategory;
+  final String submittedText;
+
+  const PrayerHomePage({
+    super.key,
+    this.submittedCategory = '',
+    this.submittedText = '',
+  });
 
   void _onNavTap(BuildContext context, int index) {
     if (index == 0) {
-
     } else if (index == 1) {
       Navigator.pushReplacement(
         context,
@@ -29,6 +35,20 @@ class PrayerHomePage extends StatelessWidget {
     }
   }
 
+  void _onShare(BuildContext context, String category, String text) {
+    final trimmed = text.trim();
+    if (trimmed.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('No content to share yet')),
+      );
+      return;
+    }
+
+    final c = category.isEmpty ? 'Note' : category;
+    final message = '$c:\n$trimmed\n\nShared from Prayer+';
+    Share.share(message);
+  }
+
   @override
   Widget build(BuildContext context) {
     final bgColor =
@@ -40,11 +60,20 @@ class PrayerHomePage extends StatelessWidget {
     final subtitleColor =
     AppConfig.darkMode ? Colors.grey[300] : Colors.grey[600];
 
-    const ayahText =
+    const defaultAyah =
         '"The path of those upon whom\n'
         'You have bestowed favor, not of\n'
         'those who have evoked [Your]\n'
         'anger or of those who are astray."';
+
+    final bool hasSubmitted = submittedText.trim().isNotEmpty;
+
+    final String title =
+    hasSubmitted ? submittedCategory : 'Ayah of the Day';
+    final String body =
+    hasSubmitted ? submittedText : defaultAyah;
+    final String reference =
+    hasSubmitted ? '' : 'Quran 1:7';
 
     return Scaffold(
       backgroundColor: bgColor,
@@ -87,7 +116,6 @@ class PrayerHomePage extends StatelessWidget {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.center,
                   children: [
-
                     Text(
                       'Home Screen',
                       style: TextStyle(
@@ -97,8 +125,6 @@ class PrayerHomePage extends StatelessWidget {
                       textAlign: TextAlign.center,
                     ),
                     const SizedBox(height: 24),
-
-                    // Prayer+ على اليسار
                     Align(
                       alignment: Alignment.centerLeft,
                       child: Text(
@@ -111,10 +137,18 @@ class PrayerHomePage extends StatelessWidget {
                       ),
                     ),
                     const SizedBox(height: 40),
-
-
                     Text(
-                      ayahText,
+                      title,
+                      style: TextStyle(
+                        fontSize: AppConfig.fontSize,
+                        fontWeight: FontWeight.w600,
+                        color: mainTextColor,
+                      ),
+                      textAlign: TextAlign.center,
+                    ),
+                    const SizedBox(height: 12),
+                    Text(
+                      body,
                       style: TextStyle(
                         fontSize: AppConfig.fontSize,
                         color: mainTextColor,
@@ -122,24 +156,20 @@ class PrayerHomePage extends StatelessWidget {
                       ),
                       textAlign: TextAlign.center,
                     ),
-                    const SizedBox(height: 24),
-
-
-                    Text(
-                      'Quran 1:7',
-                      style: TextStyle(
-                        fontSize: AppConfig.fontSize - 2,
-                        color: subtitleColor,
+                    const SizedBox(height: 12),
+                    if (reference.isNotEmpty)
+                      Text(
+                        reference,
+                        style: TextStyle(
+                          fontSize: AppConfig.fontSize - 2,
+                          color: subtitleColor,
+                        ),
+                        textAlign: TextAlign.center,
                       ),
-                      textAlign: TextAlign.center,
-                    ),
                     const SizedBox(height: 32),
-
-
                     ElevatedButton(
-                      onPressed: () {
-                        // TODO: لاحقاً تشاركين الآية
-                      },
+                      onPressed: () =>
+                          _onShare(context, title, body),
                       style: ElevatedButton.styleFrom(
                         backgroundColor: const Color(0xFF111827),
                         padding: const EdgeInsets.symmetric(
