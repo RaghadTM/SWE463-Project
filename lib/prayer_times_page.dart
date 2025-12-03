@@ -3,9 +3,51 @@ import 'home_page.dart';
 import 'submit_hadith_page.dart';
 import 'settings_page.dart';
 import 'app_config.dart';
+import 'services/prayer_time_service.dart';
 
-class PrayerTimesPage extends StatelessWidget {
+class PrayerTimesPage extends StatefulWidget {
   const PrayerTimesPage({super.key});
+
+  @override
+  State<PrayerTimesPage> createState() => _PrayerTimesPageState();
+}
+
+class _PrayerTimesPageState extends State<PrayerTimesPage> {
+  final _service = PrayerTimeService();
+
+  Map<String, dynamic>? prayerTimes;
+  bool isLoading = true;
+  String? errorMessage;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadPrayerTimes();
+  }
+
+  Future<void> _loadPrayerTimes() async {
+    setState(() {
+      isLoading = true;
+      errorMessage = null;
+    });
+
+    try {
+      final data = await _service.fetchPrayerTimes(
+        city: "Riyadh",
+        country: "Saudi Arabia",
+      );
+
+      setState(() {
+        prayerTimes = data;
+        isLoading = false;
+      });
+    } catch (e) {
+      setState(() {
+        errorMessage = "Failed to load prayer times";
+        isLoading = false;
+      });
+    }
+  }
 
   void _onNavTap(BuildContext context, int index) {
     if (index == 0) {
@@ -13,8 +55,6 @@ class PrayerTimesPage extends StatelessWidget {
         context,
         MaterialPageRoute(builder: (_) => const PrayerHomePage()),
       );
-    } else if (index == 1) {
-
     } else if (index == 2) {
       Navigator.pushReplacement(
         context,
@@ -30,20 +70,57 @@ class PrayerTimesPage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final prayerTimes = [
-      {'name': 'Fajr', 'time': '5:00 AM'},
-      {'name': 'Dhuhr', 'time': '12:30 PM'},
-      {'name': 'Asr', 'time': '3:45 PM'},
-      {'name': 'Maghrib', 'time': '6:15 PM'},
-      {'name': 'Isha', 'time': '8:00 PM'},
-    ];
-
     final bgColor =
     AppConfig.darkMode ? const Color(0xFF111827) : const Color(0xFFF5F7FB);
     final cardColor =
     AppConfig.darkMode ? const Color(0xFF1F2933) : Colors.white;
-    final textColor =
-    AppConfig.darkMode ? Colors.white : Colors.black87;
+    final textColor = AppConfig.darkMode ? Colors.white : Colors.black87;
+
+
+    Widget content;
+
+    if (isLoading) {
+      content = const Center(child: CircularProgressIndicator());
+    } else if (errorMessage != null) {
+      content = Center(
+        child: Text(
+          errorMessage!,
+          style: TextStyle(color: textColor),
+        ),
+      );
+    } else {
+      final keys = ["Fajr", "Dhuhr", "Asr", "Maghrib", "Isha"];
+      final timesList = keys.map((k) => MapEntry(k, prayerTimes![k])).toList();
+
+
+      content = ListView.separated(
+        itemCount: timesList.length,
+        separatorBuilder: (_, __) => const SizedBox(height: 16),
+        itemBuilder: (context, index) {
+          final item = timesList[index];
+          return Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Text(
+                item.key,
+                style: TextStyle(
+                  fontSize: AppConfig.fontSize,
+                  fontWeight: FontWeight.w600,
+                  color: textColor,
+                ),
+              ),
+              Text(
+                item.value,
+                style: TextStyle(
+                  fontSize: AppConfig.fontSize - 4,
+                  color: AppConfig.darkMode ? Colors.grey[300] : Colors.grey,
+                ),
+              ),
+            ],
+          );
+        },
+      );
+    }
 
     return Scaffold(
       backgroundColor: bgColor,
@@ -81,8 +158,7 @@ class PrayerTimesPage extends StatelessWidget {
               ),
               elevation: 6,
               child: Padding(
-                padding:
-                const EdgeInsets.symmetric(horizontal: 24, vertical: 24),
+                padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 24),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
@@ -91,9 +167,8 @@ class PrayerTimesPage extends StatelessWidget {
                         'Prayer Times',
                         style: TextStyle(
                           fontSize: AppConfig.fontSize - 4,
-                          color: AppConfig.darkMode
-                              ? Colors.grey[300]
-                              : Colors.grey,
+                          color:
+                          AppConfig.darkMode ? Colors.grey[300] : Colors.grey,
                         ),
                       ),
                     ),
@@ -119,9 +194,7 @@ class PrayerTimesPage extends StatelessWidget {
                               borderRadius: BorderRadius.circular(8),
                             ),
                           ),
-                          onPressed: () {
-                            // TODO: Implement refresh functionality
-                          },
+                          onPressed: _loadPrayerTimes,
                           child: Text(
                             'Refresh',
                             style: TextStyle(
@@ -132,52 +205,9 @@ class PrayerTimesPage extends StatelessWidget {
                       ],
                     ),
                     const SizedBox(height: 24),
-                    Expanded(
-                      child: ListView.separated(
-                        itemCount: prayerTimes.length,
-                        separatorBuilder: (_, __) =>
-                        const SizedBox(height: 16),
-                        itemBuilder: (context, index) {
-                          final item = prayerTimes[index];
-                          return Row(
-                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  Text(
-                                    item['name']!,
-                                    style: TextStyle(
-                                      fontSize: AppConfig.fontSize,
-                                      fontWeight: FontWeight.w600,
-                                      color: textColor,
-                                    ),
-                                  ),
-                                  const SizedBox(height: 4),
-                                  Text(
-                                    item['time']!,
-                                    style: TextStyle(
-                                      fontSize: AppConfig.fontSize - 4,
-                                      color: AppConfig.darkMode
-                                          ? Colors.grey[300]
-                                          : Colors.grey,
-                                    ),
-                                  ),
-                                ],
-                              ),
-                              const Padding(
-                                padding: EdgeInsets.only(top: 6),
-                                child: Icon(
-                                  Icons.circle,
-                                  size: 10,
-                                ),
-                              ),
-                            ],
-                          );
-                        },
-                      ),
-                    ),
+
+
+                    Expanded(child: content),
                   ],
                 ),
               ),

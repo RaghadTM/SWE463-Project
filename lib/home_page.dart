@@ -4,8 +4,9 @@ import 'prayer_times_page.dart';
 import 'submit_hadith_page.dart';
 import 'settings_page.dart';
 import 'app_config.dart';
+import 'services/hadith_ayah_service.dart';
 
-class PrayerHomePage extends StatelessWidget {
+class PrayerHomePage extends StatefulWidget {
   final String submittedCategory;
   final String submittedText;
 
@@ -15,8 +16,48 @@ class PrayerHomePage extends StatelessWidget {
     this.submittedText = '',
   });
 
+  @override
+  State<PrayerHomePage> createState() => _PrayerHomePageState();
+}
+
+class _PrayerHomePageState extends State<PrayerHomePage> {
+  final _service = HadithAyahService();
+
+  String? _apiText;
+  String? _apiSource;
+  bool _isLoading = true;
+  String? _error;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadContent();
+  }
+
+  Future<void> _loadContent() async {
+    setState(() {
+      _isLoading = true;
+      _error = null;
+    });
+
+    try {
+      final data = await _service.fetchRandomContent();
+      setState(() {
+        _apiText = data['text'];
+        _apiSource = data['source'];
+        _isLoading = false;
+      });
+    } catch (e) {
+      setState(() {
+        _error = 'Failed to load content';
+        _isLoading = false;
+      });
+    }
+  }
+
   void _onNavTap(BuildContext context, int index) {
     if (index == 0) {
+
     } else if (index == 1) {
       Navigator.pushReplacement(
         context,
@@ -35,8 +76,8 @@ class PrayerHomePage extends StatelessWidget {
     }
   }
 
-  void _onShare(BuildContext context, String category, String text) {
-    final trimmed = text.trim();
+  void _onShare(String title, String body) {
+    final trimmed = body.trim();
     if (trimmed.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('No content to share yet')),
@@ -44,8 +85,7 @@ class PrayerHomePage extends StatelessWidget {
       return;
     }
 
-    final c = category.isEmpty ? 'Note' : category;
-    final message = '$c:\n$trimmed\n\nShared from Prayer+';
+    final message = '$title:\n$trimmed\n\nShared from Prayer+';
     Share.share(message);
   }
 
@@ -60,20 +100,38 @@ class PrayerHomePage extends StatelessWidget {
     final subtitleColor =
     AppConfig.darkMode ? Colors.grey[300] : Colors.grey[600];
 
-    const defaultAyah =
-        '"The path of those upon whom\n'
-        'You have bestowed favor, not of\n'
-        'those who have evoked [Your]\n'
-        'anger or of those who are astray."';
+    final bool hasSubmitted = widget.submittedText.trim().isNotEmpty;
 
-    final bool hasSubmitted = submittedText.trim().isNotEmpty;
+    String displayTitle = 'Ayah / Hadith of the Day';
+    String displayBody = '';
+    String displayRef = '';
 
-    final String title =
-    hasSubmitted ? submittedCategory : 'Ayah of the Day';
-    final String body =
-    hasSubmitted ? submittedText : defaultAyah;
-    final String reference =
-    hasSubmitted ? '' : 'Quran 1:7';
+    if (_isLoading) {
+      displayBody = 'Loading...';
+    } else if (_error != null) {
+      displayBody = _error!;
+    } else {
+      final apiText = _apiText ?? '';
+      final apiSource = _apiSource ?? '';
+
+      if (hasSubmitted && apiText.isNotEmpty) {
+        displayTitle = '${widget.submittedCategory} & Daily Reflection';
+        displayBody = '${widget.submittedText.trim()}\n\n---\n\n$apiText';
+        displayRef = apiSource;
+      } else if (hasSubmitted) {
+        displayTitle = widget.submittedCategory;
+        displayBody = widget.submittedText.trim();
+        displayRef = '';
+      } else {
+        displayTitle = 'Ayah / Hadith of the Day';
+        displayBody = apiText;
+        displayRef = apiSource;
+      }
+    }
+
+
+    final double bodyFontSize =
+    displayBody.length > 400 ? AppConfig.fontSize - 2 : AppConfig.fontSize;
 
     return Scaffold(
       backgroundColor: bgColor,
@@ -136,55 +194,68 @@ class PrayerHomePage extends StatelessWidget {
                         ),
                       ),
                     ),
-                    const SizedBox(height: 40),
-                    Text(
-                      title,
-                      style: TextStyle(
-                        fontSize: AppConfig.fontSize,
-                        fontWeight: FontWeight.w600,
-                        color: mainTextColor,
-                      ),
-                      textAlign: TextAlign.center,
-                    ),
-                    const SizedBox(height: 12),
-                    Text(
-                      body,
-                      style: TextStyle(
-                        fontSize: AppConfig.fontSize,
-                        color: mainTextColor,
-                        height: 1.4,
-                      ),
-                      textAlign: TextAlign.center,
-                    ),
-                    const SizedBox(height: 12),
-                    if (reference.isNotEmpty)
-                      Text(
-                        reference,
-                        style: TextStyle(
-                          fontSize: AppConfig.fontSize - 2,
-                          color: subtitleColor,
-                        ),
-                        textAlign: TextAlign.center,
-                      ),
-                    const SizedBox(height: 32),
-                    ElevatedButton(
-                      onPressed: () =>
-                          _onShare(context, title, body),
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: const Color(0xFF111827),
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 24,
-                          vertical: 10,
-                        ),
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(6),
-                        ),
-                      ),
-                      child: Text(
-                        'Share',
-                        style: TextStyle(
-                          fontSize: AppConfig.fontSize - 2,
-                          color: Colors.white,
+                    const SizedBox(height: 24),
+
+
+                    Expanded(
+                      child: SingleChildScrollView(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.center,
+                          children: [
+                            const SizedBox(height: 16),
+                            Text(
+                              displayTitle,
+                              style: TextStyle(
+                                fontSize: AppConfig.fontSize,
+                                fontWeight: FontWeight.w600,
+                                color: mainTextColor,
+                              ),
+                              textAlign: TextAlign.center,
+                            ),
+                            const SizedBox(height: 12),
+                            Text(
+                              displayBody,
+                              style: TextStyle(
+                                fontSize: bodyFontSize,
+                                color: mainTextColor,
+                                height: 1.4,
+                              ),
+                              textAlign: TextAlign.center,
+                            ),
+                            const SizedBox(height: 12),
+                            if (displayRef.isNotEmpty)
+                              Text(
+                                displayRef,
+                                style: TextStyle(
+                                  fontSize: AppConfig.fontSize - 2,
+                                  color: subtitleColor,
+                                ),
+                                textAlign: TextAlign.center,
+                              ),
+                            const SizedBox(height: 24),
+                            ElevatedButton(
+                              onPressed: () =>
+                                  _onShare(displayTitle, displayBody),
+                              style: ElevatedButton.styleFrom(
+                                backgroundColor: const Color(0xFF111827),
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 24,
+                                  vertical: 10,
+                                ),
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(6),
+                                ),
+                              ),
+                              child: Text(
+                                'Share',
+                                style: TextStyle(
+                                  fontSize: AppConfig.fontSize - 2,
+                                  color: Colors.white,
+                                ),
+                              ),
+                            ),
+                            const SizedBox(height: 8),
+                          ],
                         ),
                       ),
                     ),
