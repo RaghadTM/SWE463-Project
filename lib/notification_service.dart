@@ -1,10 +1,10 @@
-
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 
 class NotificationService {
   static final FlutterLocalNotificationsPlugin _notifications =
   FlutterLocalNotificationsPlugin();
 
+  // initialize notifications settings
   static Future<void> init() async {
     const AndroidInitializationSettings androidSettings =
     AndroidInitializationSettings('@mipmap/ic_launcher');
@@ -15,14 +15,14 @@ class NotificationService {
 
     await _notifications.initialize(settings);
 
-
+    // ask for notification permission
     final androidPlugin =
     _notifications.resolvePlatformSpecificImplementation<
         AndroidFlutterLocalNotificationsPlugin>();
     await androidPlugin?.requestNotificationsPermission();
   }
 
-
+  // simple helper to show an instant notification
   static Future<void> showInstantNotification(
       String title,
       String body, {
@@ -42,9 +42,7 @@ class NotificationService {
     await _notifications.show(id, title, body, details);
   }
 
-
-
-
+  // enable prayer time notification with id 1
   static Future<void> schedulePrayerNotification() async {
     await showInstantNotification(
       'Prayer Time Alerts',
@@ -53,13 +51,12 @@ class NotificationService {
     );
   }
 
+
   static Future<void> cancelPrayerNotification() async {
     await _notifications.cancel(1);
   }
 
-
-
-
+  // enable daily hadith notification
   static Future<void> scheduleDailyHadithNotification() async {
     await showInstantNotification(
       'Daily Hadith',
@@ -68,6 +65,7 @@ class NotificationService {
     );
   }
 
+  // stop daily hadith notification with id 2
   static Future<void> cancelDailyHadithNotification() async {
     await _notifications.cancel(2);
   }

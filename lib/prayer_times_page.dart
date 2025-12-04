@@ -15,6 +15,7 @@ class PrayerTimesPage extends StatefulWidget {
 class _PrayerTimesPageState extends State<PrayerTimesPage> {
   final _service = PrayerTimeService();
 
+
   Map<String, dynamic>? prayerTimes;
   bool isLoading = true;
   String? errorMessage;
@@ -22,9 +23,11 @@ class _PrayerTimesPageState extends State<PrayerTimesPage> {
   @override
   void initState() {
     super.initState();
+    // load prayer times as soon as the page opens
     _loadPrayerTimes();
   }
 
+  // fetch prayer times using GPS location
   Future<void> _loadPrayerTimes() async {
     setState(() {
       isLoading = true;
@@ -32,7 +35,6 @@ class _PrayerTimesPageState extends State<PrayerTimesPage> {
     });
 
     try {
-      // ✅ الآن نستخدم الموقع فقط (GPS)
       final data = await _service.fetchPrayerTimesByLocation();
 
       setState(() {
@@ -47,6 +49,7 @@ class _PrayerTimesPageState extends State<PrayerTimesPage> {
     }
   }
 
+  // handle bottom navigation
   void _onNavTap(BuildContext context, int index) {
     if (index == 0) {
       Navigator.pushReplacement(
@@ -75,6 +78,7 @@ class _PrayerTimesPageState extends State<PrayerTimesPage> {
     final textColor = AppConfig.darkMode ? Colors.white : Colors.black87;
 
     Widget content;
+
 
     if (isLoading) {
       content = const Center(child: CircularProgressIndicator());
@@ -109,8 +113,9 @@ class _PrayerTimesPageState extends State<PrayerTimesPage> {
                 item.value,
                 style: TextStyle(
                   fontSize: AppConfig.fontSize - 4,
-                  color:
-                  AppConfig.darkMode ? Colors.grey[300] : Colors.grey[700],
+                  color: AppConfig.darkMode
+                      ? Colors.grey[300]
+                      : Colors.grey[700],
                 ),
               ),
             ],
@@ -193,6 +198,7 @@ class _PrayerTimesPageState extends State<PrayerTimesPage> {
                               borderRadius: BorderRadius.circular(8),
                             ),
                           ),
+                          // reload prayer times when user clicks refresh
                           onPressed: _loadPrayerTimes,
                           child: Text(
                             'Refresh',

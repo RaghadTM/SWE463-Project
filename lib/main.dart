@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_core/firebase_core.dart';
-
 import 'home_page.dart';
 import 'notification_service.dart';
 
@@ -20,11 +19,14 @@ class PrayerApp extends StatelessWidget {
       debugShowCheckedModeBanner: false,
       title: 'Prayer+',
       theme: ThemeData(
+        // using material 2 theme
         useMaterial3: false,
         fontFamily: 'Roboto',
         primaryColor: const Color(0xFF111827),
       ),
+      // main home screen
       home: const PrayerHomePage(),
+
     );
   }
 }

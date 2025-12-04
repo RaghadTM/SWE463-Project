@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
-
 import 'home_page.dart';
 import 'prayer_times_page.dart';
 import 'settings_page.dart';
@@ -24,6 +23,7 @@ class _SubmitHadithPageState extends State<SubmitHadithPage> {
     super.dispose();
   }
 
+  // handle submit button: validate, save to Firestore, then go back home
   Future<void> _onSubmit() async {
     if (!_formKey.currentState!.validate()) return;
 
@@ -31,16 +31,16 @@ class _SubmitHadithPageState extends State<SubmitHadithPage> {
     final category = _selectedCategory;
 
     try {
-      // 1) نحفظ في Firestore
+      // save new submission in a Firestore collection
       await FirebaseFirestore.instance
-          .collection('hadith_submissions') // نفس الاسم اللي في الهوم
+          .collection('hadith_submissions')
           .add({
-        'text': text,               // نفس أسماء الحقول
+        'text': text,
         'category': category,
         'createdAt': FieldValue.serverTimestamp(),
       });
 
-      // 2) نرجع للهوم ونمرر القيم مباشرة (تظهر فوراً)
+
       if (!mounted) return;
       Navigator.pushReplacement(
         context,
@@ -63,6 +63,7 @@ class _SubmitHadithPageState extends State<SubmitHadithPage> {
     }
   }
 
+  // bottom navigation
   void _onNavTap(int index) {
     if (index == 0) {
       Navigator.pushReplacement(
@@ -75,7 +76,7 @@ class _SubmitHadithPageState extends State<SubmitHadithPage> {
         MaterialPageRoute(builder: (_) => const PrayerTimesPage()),
       );
     } else if (index == 2) {
-      // current
+
     } else if (index == 3) {
       Navigator.pushReplacement(
         context,
@@ -145,6 +146,8 @@ class _SubmitHadithPageState extends State<SubmitHadithPage> {
                         ),
                       ),
                       const SizedBox(height: 24),
+
+
                       Text(
                         'Submit Hadith or Note',
                         style: TextStyle(
@@ -182,6 +185,8 @@ class _SubmitHadithPageState extends State<SubmitHadithPage> {
                         },
                       ),
                       const SizedBox(height: 16),
+
+                      // category dropdown
                       Text(
                         'Category',
                         style: TextStyle(
@@ -228,6 +233,8 @@ class _SubmitHadithPageState extends State<SubmitHadithPage> {
                         },
                       ),
                       const SizedBox(height: 24),
+
+                      // submit button
                       SizedBox(
                         width: double.infinity,
                         child: ElevatedButton(

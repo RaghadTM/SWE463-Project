@@ -5,7 +5,6 @@ import 'submit_hadith_page.dart';
 import 'app_config.dart';
 import 'notification_service.dart';
 
-
 class SettingsPage extends StatefulWidget {
   const SettingsPage({super.key});
 
@@ -26,6 +25,7 @@ class _SettingsPageState extends State<SettingsPage> {
   Color get _textColor =>
       darkMode ? Colors.white : Colors.black87;
 
+  // simple navigation handler for bottom bar
   void _onNavTap(int index) {
     if (index == 0) {
       Navigator.pushReplacement(
@@ -42,7 +42,9 @@ class _SettingsPageState extends State<SettingsPage> {
         context,
         MaterialPageRoute(builder: (_) => const SubmitHadithPage()),
       );
-    } else if (index == 3) {}
+    } else if (index == 3) {
+
+    }
   }
 
   @override
@@ -89,6 +91,7 @@ class _SettingsPageState extends State<SettingsPage> {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
+                      // settings header
                       Center(
                         child: Text(
                           'Settings',
@@ -99,6 +102,8 @@ class _SettingsPageState extends State<SettingsPage> {
                         ),
                       ),
                       const SizedBox(height: 24),
+
+                      // main title row
                       Row(
                         mainAxisAlignment: MainAxisAlignment.spaceBetween,
                         children: [
@@ -116,7 +121,10 @@ class _SettingsPageState extends State<SettingsPage> {
                           ),
                         ],
                       ),
+
                       const SizedBox(height: 24),
+
+
                       Text(
                         'Appearance',
                         style: TextStyle(
@@ -126,6 +134,8 @@ class _SettingsPageState extends State<SettingsPage> {
                         ),
                       ),
                       const SizedBox(height: 12),
+
+                      // dark mode switch
                       Row(
                         mainAxisAlignment: MainAxisAlignment.spaceBetween,
                         children: [
@@ -139,6 +149,7 @@ class _SettingsPageState extends State<SettingsPage> {
                           Switch(
                             value: darkMode,
                             onChanged: (v) {
+                              // toggle app theme
                               setState(() {
                                 darkMode = v;
                                 AppConfig.darkMode = v;
@@ -148,6 +159,8 @@ class _SettingsPageState extends State<SettingsPage> {
                         ],
                       ),
                       const SizedBox(height: 12),
+
+                      // font size slider
                       Text(
                         'Font Size',
                         style: TextStyle(
@@ -160,13 +173,17 @@ class _SettingsPageState extends State<SettingsPage> {
                         min: 12,
                         max: 24,
                         onChanged: (v) {
+
                           setState(() {
                             fontSize = v;
                             AppConfig.fontSize = v;
                           });
                         },
                       ),
+
                       const SizedBox(height: 24),
+
+                      // notifications section
                       Text(
                         'Notifications',
                         style: TextStyle(
@@ -175,6 +192,8 @@ class _SettingsPageState extends State<SettingsPage> {
                           color: _textColor,
                         ),
                       ),
+
+                      // prayer alerts toggle
                       CheckboxListTile(
                         contentPadding: EdgeInsets.zero,
                         activeColor: Colors.blue,
@@ -190,6 +209,8 @@ class _SettingsPageState extends State<SettingsPage> {
                         onChanged: (v) async {
                           final value = v ?? false;
                           setState(() => prayerAlerts = value);
+
+                          // enable or disable prayer alerts
                           if (value) {
                             await NotificationService.schedulePrayerNotification();
                           } else {
@@ -197,6 +218,8 @@ class _SettingsPageState extends State<SettingsPage> {
                           }
                         },
                       ),
+
+                      // daily hadith alerts
                       CheckboxListTile(
                         contentPadding: EdgeInsets.zero,
                         activeColor: Colors.blue,
@@ -212,6 +235,8 @@ class _SettingsPageState extends State<SettingsPage> {
                         onChanged: (v) async {
                           final value = v ?? false;
                           setState(() => hadithAlerts = value);
+
+                          // enable or disable daily hadith alerts
                           if (value) {
                             await NotificationService.scheduleDailyHadithNotification();
                           } else {

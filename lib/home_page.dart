@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:share_plus/share_plus.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
-
 import 'prayer_times_page.dart';
 import 'submit_hadith_page.dart';
 import 'settings_page.dart';
@@ -30,18 +29,19 @@ class _PrayerHomePageState extends State<PrayerHomePage> {
   bool _isLoadingApi = true;
   String? _apiError;
 
-  // كل النوتس اللي بالمجموعة hadiths
+  // list of user notes from Firestore
   List<Map<String, dynamic>> _userNotes = [];
   bool _isLoadingNotes = true;
 
   @override
   void initState() {
     super.initState();
+    // load API content and user notes when home screen opens
     _loadApiContent();
     _loadUserNotes();
   }
 
-  // جلب الآية/الحديث من الـ API
+  // load random ayah or hadith from service
   Future<void> _loadApiContent() async {
     setState(() {
       _isLoadingApi = true;
@@ -66,7 +66,7 @@ class _PrayerHomePageState extends State<PrayerHomePage> {
     }
   }
 
-  // جلب كل النوتس من Firestore (collection: hadiths)
+  // load all user requests from "hadith_submissions" collection
   Future<void> _loadUserNotes() async {
     try {
       final snapshot = await FirebaseFirestore.instance
@@ -98,9 +98,10 @@ class _PrayerHomePageState extends State<PrayerHomePage> {
     }
   }
 
+  // handle bottom navigation clicks
   void _onNavTap(BuildContext context, int index) {
     if (index == 0) {
-      // already on home
+
     } else if (index == 1) {
       Navigator.pushReplacement(
         context,
@@ -119,6 +120,7 @@ class _PrayerHomePageState extends State<PrayerHomePage> {
     }
   }
 
+  // share current content using share_plus
   void _onShare(String title, String body) {
     final trimmed = body.trim();
     if (trimmed.isEmpty) {
@@ -143,7 +145,7 @@ class _PrayerHomePageState extends State<PrayerHomePage> {
     final subtitleColor =
     AppConfig.darkMode ? Colors.grey[300] : Colors.grey[600];
 
-    // تجهيز نص الـ API
+    // prepare API text to show on UI
     String displayTitle = 'Ayah / Hadith of the Day';
     String displayBody = '';
     String displayRef = '';
@@ -157,7 +159,7 @@ class _PrayerHomePageState extends State<PrayerHomePage> {
       displayRef = _apiSource ?? '';
     }
 
-    // تصغير الخط لو النص طويل جداً
+
     final double bodyFontSize =
     displayBody.length > 400 ? AppConfig.fontSize - 2 : AppConfig.fontSize;
 
@@ -226,14 +228,15 @@ class _PrayerHomePageState extends State<PrayerHomePage> {
                     ),
                     const SizedBox(height: 16),
 
-                    // خلي باقي المحتوى قابل للسكرول
+
                     Expanded(
                       child: SingleChildScrollView(
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.center,
                           children: [
                             const SizedBox(height: 16),
-                            // ======= قسم الـ API =======
+
+                            // API section
                             Text(
                               displayTitle,
                               style: TextStyle(
@@ -287,7 +290,7 @@ class _PrayerHomePageState extends State<PrayerHomePage> {
                             ),
                             const SizedBox(height: 32),
 
-                            // ======= قسم النوتس المحفوظه =======
+                            //user saved notes section
                             Align(
                               alignment: Alignment.centerLeft,
                               child: Text(

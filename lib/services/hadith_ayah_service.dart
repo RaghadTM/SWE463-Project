@@ -4,7 +4,7 @@ import 'package:http/http.dart' as http;
 
 class HadithAyahService {
 
-
+  // to get a random ayah from Quran API
   Future<Map<String, dynamic>> fetchRandomAyah() async {
     const totalAyat = 6236;
     final randomAyahNumber = 1 + Random().nextInt(totalAyat);
@@ -15,6 +15,7 @@ class HadithAyahService {
 
     final response = await http.get(url);
 
+    // to make sure request was successful
     if (response.statusCode != 200) {
       throw Exception("Ayah error code: ${response.statusCode}");
     }
@@ -28,8 +29,8 @@ class HadithAyahService {
     };
   }
 
+  // to get a random hadith from Sahih Bukhari API
   Future<Map<String, dynamic>> fetchRandomHadith() async {
-
     final randomNumber = 1 + Random().nextInt(2000);
 
     final url = Uri.parse(
@@ -38,12 +39,12 @@ class HadithAyahService {
 
     final response = await http.get(url);
 
+    // check if API call failed
     if (response.statusCode != 200) {
       throw Exception("Hadith error code: ${response.statusCode}");
     }
 
     final data = jsonDecode(response.body);
-
     return {
       "text": data["hadiths"][0]["text"],
       "source": "Sahih Bukhari #$randomNumber",
@@ -51,10 +52,9 @@ class HadithAyahService {
     };
   }
 
-
+  // to randomly return either ayah or hadith
   Future<Map<String, dynamic>> fetchRandomContent() async {
     final randomBool = Random().nextBool();
-
     if (randomBool) {
       return await fetchRandomAyah();
     } else {
