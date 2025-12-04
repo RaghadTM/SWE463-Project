@@ -32,10 +32,8 @@ class _PrayerTimesPageState extends State<PrayerTimesPage> {
     });
 
     try {
-      final data = await _service.fetchPrayerTimes(
-        city: "Riyadh",
-        country: "Saudi Arabia",
-      );
+      // ✅ الآن نستخدم الموقع فقط (GPS)
+      final data = await _service.fetchPrayerTimesByLocation();
 
       setState(() {
         prayerTimes = data;
@@ -76,7 +74,6 @@ class _PrayerTimesPageState extends State<PrayerTimesPage> {
     AppConfig.darkMode ? const Color(0xFF1F2933) : Colors.white;
     final textColor = AppConfig.darkMode ? Colors.white : Colors.black87;
 
-
     Widget content;
 
     if (isLoading) {
@@ -91,7 +88,6 @@ class _PrayerTimesPageState extends State<PrayerTimesPage> {
     } else {
       final keys = ["Fajr", "Dhuhr", "Asr", "Maghrib", "Isha"];
       final timesList = keys.map((k) => MapEntry(k, prayerTimes![k])).toList();
-
 
       content = ListView.separated(
         itemCount: timesList.length,
@@ -113,7 +109,8 @@ class _PrayerTimesPageState extends State<PrayerTimesPage> {
                 item.value,
                 style: TextStyle(
                   fontSize: AppConfig.fontSize - 4,
-                  color: AppConfig.darkMode ? Colors.grey[300] : Colors.grey,
+                  color:
+                  AppConfig.darkMode ? Colors.grey[300] : Colors.grey[700],
                 ),
               ),
             ],
@@ -158,7 +155,8 @@ class _PrayerTimesPageState extends State<PrayerTimesPage> {
               ),
               elevation: 6,
               child: Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 24),
+                padding:
+                const EdgeInsets.symmetric(horizontal: 24, vertical: 24),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
@@ -167,8 +165,9 @@ class _PrayerTimesPageState extends State<PrayerTimesPage> {
                         'Prayer Times',
                         style: TextStyle(
                           fontSize: AppConfig.fontSize - 4,
-                          color:
-                          AppConfig.darkMode ? Colors.grey[300] : Colors.grey,
+                          color: AppConfig.darkMode
+                              ? Colors.grey[300]
+                              : Colors.grey,
                         ),
                       ),
                     ),
@@ -205,8 +204,6 @@ class _PrayerTimesPageState extends State<PrayerTimesPage> {
                       ],
                     ),
                     const SizedBox(height: 24),
-
-
                     Expanded(child: content),
                   ],
                 ),

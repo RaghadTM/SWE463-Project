@@ -1,10 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+
 import 'home_page.dart';
 import 'prayer_times_page.dart';
 import 'settings_page.dart';
 import 'app_config.dart';
-import 'hadith_repository.dart';
 
 class SubmitHadithPage extends StatefulWidget {
   const SubmitHadithPage({super.key});
@@ -18,21 +18,30 @@ class _SubmitHadithPageState extends State<SubmitHadithPage> {
   final TextEditingController _hadithController = TextEditingController();
   String _selectedCategory = 'Hadith';
 
-  bool prayerAlerts = false;
-  bool hadithAlerts = false;
-
   @override
   void dispose() {
     _hadithController.dispose();
     super.dispose();
   }
 
+  Future<void> _onSubmit() async {
+    if (!_formKey.currentState!.validate()) return;
 
-  void _onSubmit() {
-    if (_formKey.currentState!.validate()) {
-      final text = _hadithController.text.trim();
-      final category = _selectedCategory;
+    final text = _hadithController.text.trim();
+    final category = _selectedCategory;
 
+    try {
+      // 1) نحفظ في Firestore
+      await FirebaseFirestore.instance
+          .collection('hadith_submissions') // نفس الاسم اللي في الهوم
+          .add({
+        'text': text,               // نفس أسماء الحقول
+        'category': category,
+        'createdAt': FieldValue.serverTimestamp(),
+      });
+
+      // 2) نرجع للهوم ونمرر القيم مباشرة (تظهر فوراً)
+      if (!mounted) return;
       Navigator.pushReplacement(
         context,
         MaterialPageRoute(
@@ -46,10 +55,13 @@ class _SubmitHadithPageState extends State<SubmitHadithPage> {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('Submitted successfully')),
       );
+    } catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Failed to submit: $e')),
+      );
     }
   }
-
-
 
   void _onNavTap(int index) {
     if (index == 0) {
@@ -63,7 +75,7 @@ class _SubmitHadithPageState extends State<SubmitHadithPage> {
         MaterialPageRoute(builder: (_) => const PrayerTimesPage()),
       );
     } else if (index == 2) {
-
+      // current
     } else if (index == 3) {
       Navigator.pushReplacement(
         context,
@@ -88,22 +100,10 @@ class _SubmitHadithPageState extends State<SubmitHadithPage> {
         currentIndex: 2,
         onTap: _onNavTap,
         items: const [
-          BottomNavigationBarItem(
-            icon: Icon(Icons.home_outlined),
-            label: '',
-          ),
-          BottomNavigationBarItem(
-            icon: Icon(Icons.circle_outlined),
-            label: '',
-          ),
-          BottomNavigationBarItem(
-            icon: Icon(Icons.bookmark),
-            label: '',
-          ),
-          BottomNavigationBarItem(
-            icon: Icon(Icons.more_horiz),
-            label: '',
-          ),
+          BottomNavigationBarItem(icon: Icon(Icons.home_outlined), label: ''),
+          BottomNavigationBarItem(icon: Icon(Icons.circle_outlined), label: ''),
+          BottomNavigationBarItem(icon: Icon(Icons.bookmark), label: ''),
+          BottomNavigationBarItem(icon: Icon(Icons.more_horiz), label: ''),
         ],
       ),
       body: SafeArea(
@@ -126,7 +126,7 @@ class _SubmitHadithPageState extends State<SubmitHadithPage> {
                     children: [
                       Center(
                         child: Text(
-                          'Submit Hadith',
+                          'Submit',
                           style: TextStyle(
                             fontSize: AppConfig.fontSize - 4,
                             color: AppConfig.darkMode
@@ -146,7 +146,7 @@ class _SubmitHadithPageState extends State<SubmitHadithPage> {
                       ),
                       const SizedBox(height: 24),
                       Text(
-                        'Submit Hadith',
+                        'Submit Hadith or Note',
                         style: TextStyle(
                           fontSize: AppConfig.fontSize,
                           fontWeight: FontWeight.w600,

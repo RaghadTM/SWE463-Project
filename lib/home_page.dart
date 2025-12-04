@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:share_plus/share_plus.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
+
 import 'prayer_times_page.dart';
 import 'submit_hadith_page.dart';
 import 'settings_page.dart';
@@ -25,39 +27,80 @@ class _PrayerHomePageState extends State<PrayerHomePage> {
 
   String? _apiText;
   String? _apiSource;
-  bool _isLoading = true;
-  String? _error;
+  bool _isLoadingApi = true;
+  String? _apiError;
+
+  // كل النوتس اللي بالمجموعة hadiths
+  List<Map<String, dynamic>> _userNotes = [];
+  bool _isLoadingNotes = true;
 
   @override
   void initState() {
     super.initState();
-    _loadContent();
+    _loadApiContent();
+    _loadUserNotes();
   }
 
-  Future<void> _loadContent() async {
+  // جلب الآية/الحديث من الـ API
+  Future<void> _loadApiContent() async {
     setState(() {
-      _isLoading = true;
-      _error = null;
+      _isLoadingApi = true;
+      _apiError = null;
     });
 
     try {
       final data = await _service.fetchRandomContent();
+      if (!mounted) return;
+
       setState(() {
         _apiText = data['text'];
         _apiSource = data['source'];
-        _isLoading = false;
+        _isLoadingApi = false;
       });
     } catch (e) {
+      if (!mounted) return;
       setState(() {
-        _error = 'Failed to load content';
-        _isLoading = false;
+        _apiError = 'Failed to load content';
+        _isLoadingApi = false;
+      });
+    }
+  }
+
+  // جلب كل النوتس من Firestore (collection: hadiths)
+  Future<void> _loadUserNotes() async {
+    try {
+      final snapshot = await FirebaseFirestore.instance
+          .collection('hadith_submissions')
+          .orderBy('createdAt', descending: true)
+          .get();
+
+      if (!mounted) return;
+
+      final notes = snapshot.docs.map((doc) {
+        final data = doc.data();
+        return {
+          'text': data['text'] ?? '',
+          'category': data['category'] ?? '',
+          'createdAt': data['createdAt'],
+        };
+      }).toList();
+
+      setState(() {
+        _userNotes = notes;
+        _isLoadingNotes = false;
+      });
+    } catch (e) {
+      if (!mounted) return;
+      setState(() {
+        _userNotes = [];
+        _isLoadingNotes = false;
       });
     }
   }
 
   void _onNavTap(BuildContext context, int index) {
     if (index == 0) {
-
+      // already on home
     } else if (index == 1) {
       Navigator.pushReplacement(
         context,
@@ -100,36 +143,21 @@ class _PrayerHomePageState extends State<PrayerHomePage> {
     final subtitleColor =
     AppConfig.darkMode ? Colors.grey[300] : Colors.grey[600];
 
-    final bool hasSubmitted = widget.submittedText.trim().isNotEmpty;
-
+    // تجهيز نص الـ API
     String displayTitle = 'Ayah / Hadith of the Day';
     String displayBody = '';
     String displayRef = '';
 
-    if (_isLoading) {
+    if (_isLoadingApi) {
       displayBody = 'Loading...';
-    } else if (_error != null) {
-      displayBody = _error!;
+    } else if (_apiError != null) {
+      displayBody = _apiError!;
     } else {
-      final apiText = _apiText ?? '';
-      final apiSource = _apiSource ?? '';
-
-      if (hasSubmitted && apiText.isNotEmpty) {
-        displayTitle = '${widget.submittedCategory} & Daily Reflection';
-        displayBody = '${widget.submittedText.trim()}\n\n---\n\n$apiText';
-        displayRef = apiSource;
-      } else if (hasSubmitted) {
-        displayTitle = widget.submittedCategory;
-        displayBody = widget.submittedText.trim();
-        displayRef = '';
-      } else {
-        displayTitle = 'Ayah / Hadith of the Day';
-        displayBody = apiText;
-        displayRef = apiSource;
-      }
+      displayBody = _apiText ?? '';
+      displayRef = _apiSource ?? '';
     }
 
-
+    // تصغير الخط لو النص طويل جداً
     final double bodyFontSize =
     displayBody.length > 400 ? AppConfig.fontSize - 2 : AppConfig.fontSize;
 
@@ -169,8 +197,10 @@ class _PrayerHomePageState extends State<PrayerHomePage> {
               ),
               elevation: 6,
               child: Padding(
-                padding:
-                const EdgeInsets.symmetric(horizontal: 24, vertical: 24),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 24,
+                  vertical: 24,
+                ),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.center,
                   children: [
@@ -194,15 +224,16 @@ class _PrayerHomePageState extends State<PrayerHomePage> {
                         ),
                       ),
                     ),
-                    const SizedBox(height: 24),
+                    const SizedBox(height: 16),
 
-
+                    // خلي باقي المحتوى قابل للسكرول
                     Expanded(
                       child: SingleChildScrollView(
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.center,
                           children: [
                             const SizedBox(height: 16),
+                            // ======= قسم الـ API =======
                             Text(
                               displayTitle,
                               style: TextStyle(
@@ -232,7 +263,7 @@ class _PrayerHomePageState extends State<PrayerHomePage> {
                                 ),
                                 textAlign: TextAlign.center,
                               ),
-                            const SizedBox(height: 24),
+                            const SizedBox(height: 16),
                             ElevatedButton(
                               onPressed: () =>
                                   _onShare(displayTitle, displayBody),
@@ -254,6 +285,93 @@ class _PrayerHomePageState extends State<PrayerHomePage> {
                                 ),
                               ),
                             ),
+                            const SizedBox(height: 32),
+
+                            // ======= قسم النوتس المحفوظه =======
+                            Align(
+                              alignment: Alignment.centerLeft,
+                              child: Text(
+                                'Your Saved Notes',
+                                style: TextStyle(
+                                  fontSize: AppConfig.fontSize,
+                                  fontWeight: FontWeight.w600,
+                                  color: mainTextColor,
+                                ),
+                              ),
+                            ),
+                            const SizedBox(height: 12),
+
+                            if (_isLoadingNotes)
+                              const Center(
+                                child: Padding(
+                                  padding: EdgeInsets.all(8.0),
+                                  child: CircularProgressIndicator(),
+                                ),
+                              )
+                            else if (_userNotes.isEmpty)
+                              Padding(
+                                padding: const EdgeInsets.symmetric(
+                                    vertical: 8.0),
+                                child: Text(
+                                  'No notes submitted yet.',
+                                  style: TextStyle(
+                                    fontSize: AppConfig.fontSize - 2,
+                                    color: subtitleColor,
+                                  ),
+                                  textAlign: TextAlign.center,
+                                ),
+                              )
+                            else
+                              ListView.separated(
+                                shrinkWrap: true,
+                                physics: const NeverScrollableScrollPhysics(),
+                                itemCount: _userNotes.length,
+                                separatorBuilder: (_, __) =>
+                                const SizedBox(height: 12),
+                                itemBuilder: (context, index) {
+                                  final note = _userNotes[index];
+                                  final category =
+                                  (note['category'] ?? '').toString();
+                                  final text =
+                                  (note['text'] ?? '').toString();
+
+                                  return Container(
+                                    padding: const EdgeInsets.all(12),
+                                    decoration: BoxDecoration(
+                                      borderRadius: BorderRadius.circular(12),
+                                      color: AppConfig.darkMode
+                                          ? const Color(0xFF111827)
+                                          : const Color(0xFFF5F5F5),
+                                    ),
+                                    child: Column(
+                                      crossAxisAlignment:
+                                      CrossAxisAlignment.start,
+                                      children: [
+                                        Text(
+                                          category.isEmpty
+                                              ? 'Note'
+                                              : category,
+                                          style: TextStyle(
+                                            fontSize: AppConfig.fontSize - 2,
+                                            fontWeight: FontWeight.w600,
+                                            color: mainTextColor,
+                                          ),
+                                        ),
+                                        const SizedBox(height: 4),
+                                        Text(
+                                          text,
+                                          style: TextStyle(
+                                            fontSize: AppConfig.fontSize - 2,
+                                            color: mainTextColor,
+                                            height: 1.3,
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                  );
+                                },
+                              ),
+
                             const SizedBox(height: 8),
                           ],
                         ),
